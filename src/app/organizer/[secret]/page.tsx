@@ -32,14 +32,14 @@ interface Contestant {
   teamName: string;
   project: string;
   teamNumber: number;
-  ratings: { id: string; score: number; round: number }[];
+  ratings: { id: string; score: number; round: number }[] | null;
 }
 
 interface Judge {
   id: string;
   username: string;
   name: string;
-  ratings: { id: string }[];
+  ratingsCount?: number;
 }
 
 interface TeamFormData {
@@ -331,7 +331,7 @@ export default function OrganizerPage() {
   };
 
   const getAverageScore = (ratings: Contestant["ratings"]) => {
-    if (ratings.length === 0) return "-";
+    if (!ratings || ratings.length === 0) return "-";
     const avg = ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length;
     return avg.toFixed(1);
   };
@@ -465,7 +465,7 @@ export default function OrganizerPage() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="text-2xl font-bold">
-                    {contestants.reduce((sum, c) => sum + c.ratings.length, 0)}
+                    {contestants.reduce((sum, c) => sum + (c.ratings?.length ?? 0), 0)}
                   </div>
                   <p className="text-sm text-gray-500">Total Ratings</p>
                 </CardContent>
@@ -473,7 +473,7 @@ export default function OrganizerPage() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="text-2xl font-bold">
-                    {contestants.filter((c) => c.ratings.length > 0).length}
+                    {contestants.filter((c) => c.ratings && c.ratings.length > 0).length}
                   </div>
                   <p className="text-sm text-gray-500">Rated Teams</p>
                 </CardContent>
@@ -564,7 +564,7 @@ export default function OrganizerPage() {
                           <td className="py-3 px-4 font-mono">{j.username}</td>
                           <td className="py-3 px-4">{j.name}</td>
                           <td className="py-3 px-4 text-center">
-                            <Badge variant="outline">{j.ratings.length}</Badge>
+                            <Badge variant="outline">{j.ratingsCount ?? 0}</Badge>
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex justify-center gap-2">
