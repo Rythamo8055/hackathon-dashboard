@@ -1,23 +1,35 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCache, setCache, invalidateCache, CACHE_TTL } from "@/lib/cache";
 
 export async function GET() {
   try {
+    const cacheKey = "judges-list";
+    const cached = getCache(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached);
+    }
+
     const judges = await prisma.judge.findMany({
       select: {
         id: true,
         username: true,
         name: true,
-        ratings: {
-          select: {
-            id: true,
-          },
+        _count: {
+          select: { ratings: true },
         },
       },
       orderBy: { username: "asc" },
     });
 
-    return NextResponse.json(judges);
+    const result = judges.map((j) => ({
+      ...j,
+      ratings: Array(j._count.ratings).fill(null), // For backwards compat
+      ratingsCount: j._count.ratings,
+    }));
+
+    setCache(cacheKey, result, CACHE_TTL.JUDGES);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching judges:", error);
     return NextResponse.json(
@@ -39,9 +51,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if username already exists
     const existing = await prisma.judge.findUnique({
       where: { username },
+      select: { id: true },
     });
 
     if (existing) {
@@ -53,12 +65,11 @@ export async function POST(request: Request) {
 
     const judge = await prisma.judge.create({
       data: { username, password, name },
-      select: {
-        id: true,
-        username: true,
-        name: true,
-      },
+      select: { id: true, username: true, name: true },
     });
+
+    invalidateCache("judge");
+    invalidateCache("dashboard");
 
     return NextResponse.json(judge, { status: 201 });
   } catch (error) {

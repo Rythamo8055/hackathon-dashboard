@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { invalidateCache } from "@/lib/cache";
 
 export async function POST(request: Request) {
   try {
@@ -27,27 +28,27 @@ export async function POST(request: Request) {
       );
     }
 
-    // Upsert rating (update if exists, create if not)
+    // Atomic upsert - single operation
     const rating = await prisma.rating.upsert({
       where: {
-        contestantId_judgeId_round: {
-          contestantId,
-          judgeId,
-          round,
-        },
+        contestantId_judgeId_round: { contestantId, judgeId, round },
       },
-      update: {
-        score,
-        reason,
-      },
-      create: {
-        contestantId,
-        judgeId,
-        round,
-        score,
-        reason,
+      update: { score, reason },
+      create: { contestantId, judgeId, round, score, reason },
+      select: {
+        id: true,
+        contestantId: true,
+        judgeId: true,
+        round: true,
+        score: true,
+        reason: true,
       },
     });
+
+    // Invalidate relevant caches
+    invalidateCache("rating");
+    invalidateCache("dashboard");
+    invalidateCache("contestant");
 
     return NextResponse.json(rating, { status: 201 });
   } catch (error) {
@@ -62,18 +63,20 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const contestantId = searchParams.get("contestantId");
     const judgeId = searchParams.get("judgeId");
 
-    const where: { contestantId?: string; judgeId?: string } = {};
-    if (contestantId) where.contestantId = contestantId;
+    const where: { judgeId?: string } = {};
     if (judgeId) where.judgeId = judgeId;
 
     const ratings = await prisma.rating.findMany({
       where,
-      include: {
-        contestant: true,
-        judge: true,
+      select: {
+        id: true,
+        contestantId: true,
+        judgeId: true,
+        round: true,
+        score: true,
+        reason: true,
       },
     });
 

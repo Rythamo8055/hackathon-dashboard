@@ -119,8 +119,7 @@ export default function OrganizerPage() {
 
       const organizerData = await response.json();
       setOrganizer(organizerData);
-      fetchContestants();
-      fetchJudges();
+      fetchDashboardData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
@@ -128,23 +127,16 @@ export default function OrganizerPage() {
     }
   };
 
-  const fetchContestants = async () => {
+  const fetchDashboardData = async () => {
     try {
-      const response = await fetch("/api/contestants");
+      // Single optimized API call for all dashboard data
+      const response = await fetch("/api/dashboard/organizer");
       const data = await response.json();
-      setContestants(data);
+      setContestants(data.contestants);
+      setJudges(data.judges);
+      // Stats available in data.stats if needed
     } catch (err) {
-      console.error("Error fetching contestants:", err);
-    }
-  };
-
-  const fetchJudges = async () => {
-    try {
-      const response = await fetch("/api/judges");
-      const data = await response.json();
-      setJudges(data);
-    } catch (err) {
-      console.error("Error fetching judges:", err);
+      console.error("Error fetching dashboard data:", err);
     }
   };
 
@@ -165,7 +157,7 @@ export default function OrganizerPage() {
         throw new Error(data.error || "Failed to add team");
       }
 
-      await fetchContestants();
+      await fetchDashboardData();
       setShowAddTeamDialog(false);
       setTeamForm({ name: "", phone: "", teamName: "", project: "" });
     } catch (err) {
@@ -192,7 +184,7 @@ export default function OrganizerPage() {
         throw new Error(data.error || "Failed to update team");
       }
 
-      await fetchContestants();
+      await fetchDashboardData();
       setShowEditTeamDialog(false);
       setSelectedTeam(null);
       setTeamForm({ name: "", phone: "", teamName: "", project: "" });
@@ -217,7 +209,7 @@ export default function OrganizerPage() {
         throw new Error(data.error || "Failed to delete team");
       }
 
-      await fetchContestants();
+      await fetchDashboardData();
       setShowDeleteTeamDialog(false);
       setSelectedTeam(null);
     } catch (err) {
@@ -244,7 +236,7 @@ export default function OrganizerPage() {
         throw new Error(data.error || "Failed to add judge");
       }
 
-      await fetchJudges();
+      await fetchDashboardData();
       setShowAddJudgeDialog(false);
       setJudgeForm({ username: "", password: "", name: "" });
     } catch (err) {
@@ -271,7 +263,7 @@ export default function OrganizerPage() {
         throw new Error(data.error || "Failed to update judge");
       }
 
-      await fetchJudges();
+      await fetchDashboardData();
       setShowEditJudgeDialog(false);
       setSelectedJudge(null);
       setJudgeForm({ username: "", password: "", name: "" });
@@ -296,7 +288,7 @@ export default function OrganizerPage() {
         throw new Error(data.error || "Failed to delete judge");
       }
 
-      await fetchJudges();
+      await fetchDashboardData();
       setShowDeleteJudgeDialog(false);
       setSelectedJudge(null);
     } catch (err) {

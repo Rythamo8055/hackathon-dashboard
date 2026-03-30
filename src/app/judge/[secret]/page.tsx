@@ -91,24 +91,11 @@ export default function JudgePortalPage() {
 
   const fetchContestants = async (judgeId: string) => {
     try {
-      const [contestantsRes, ratingsRes] = await Promise.all([
-        fetch("/api/contestants"),
-        fetch(`/api/ratings?judgeId=${judgeId}`),
-      ]);
+      // Single optimized API call instead of 2
+      const response = await fetch(`/api/dashboard/judge?judgeId=${judgeId}`);
+      const data = await response.json();
 
-      const contestantsData: Contestant[] = await contestantsRes.json();
-      const ratingsData: Rating[] = await ratingsRes.json();
-
-      const contestantsWithRatings: ContestantWithRatings[] = contestantsData.map(
-        (c) => ({
-          ...c,
-          myRatings: ratingsData
-            .filter((r) => r.contestantId === c.id)
-            .reduce((acc, r) => ({ ...acc, [r.round]: r }), {} as { [round: number]: Rating }),
-        })
-      );
-
-      setContestants(contestantsWithRatings);
+      setContestants(data.contestants);
     } catch (err) {
       console.error("Error fetching contestants:", err);
     }
