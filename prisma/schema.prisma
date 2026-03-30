@@ -1,0 +1,51 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Contestant {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  teamName  String
+  project   String
+  teamNumber Int?    @unique
+  createdAt DateTime @default(now())
+  ratings   Rating[]
+}
+
+model Judge {
+  id       String   @id @default(cuid())
+  username String   @unique
+  password String
+  name     String
+  ratings  Rating[]
+}
+
+model Organizer {
+  id       String   @id @default(cuid())
+  username String   @unique
+  password String
+  name     String
+}
+
+model Rating {
+  id            String      @id @default(cuid())
+  contestantId  String
+  judgeId       String
+  round         Int
+  score         Int
+  reason        String
+  createdAt     DateTime    @default(now())
+  contestant    Contestant  @relation(fields: [contestantId], references: [id])
+  judge         Judge       @relation(fields: [judgeId], references: [id])
+
+  @@unique([contestantId, judgeId, round])
+}
