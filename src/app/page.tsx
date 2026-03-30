@@ -7,8 +7,8 @@ export default function Home() {
     <div className="min-h-[100dvh] flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 p-4 safe-area-inset">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Hackathon</h1>
-          <p className="text-sm text-gray-600">Competition Registration</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Hackathon Dashboard</h1>
+          <p className="text-sm text-gray-600">Competition Registration Portal</p>
         </div>
 
         <Card className="shadow-xl">
