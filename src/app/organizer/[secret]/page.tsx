@@ -32,6 +32,7 @@ interface Contestant {
   teamName: string;
   project: string;
   teamNumber: number;
+  createdAt: string;
   ratings: { id: string; score: number; round: number }[] | null;
 }
 
@@ -336,6 +337,29 @@ export default function OrganizerPage() {
     return avg.toFixed(1);
   };
 
+  const exportToCSV = () => {
+    const headers = ["Team #", "Team Name", "Lead Name", "Phone", "Project", "Avg Score", "Total Ratings", "Registered Date"];
+    const rows = contestants.map((c) => [
+      c.teamNumber,
+      `"${c.teamName}"`,
+      `"${c.name}"`,
+      c.phone,
+      `"${c.project}"`,
+      getAverageScore(c.ratings),
+      c.ratings?.length ?? 0,
+      new Date(c.createdAt as unknown as string).toLocaleDateString(),
+    ]);
+
+    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `contestants_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Unauthorized access
   if (authorized === false) {
     return (
@@ -446,12 +470,20 @@ export default function OrganizerPage() {
           <TabsContent value="teams" className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold">Manage Teams</h2>
-              <Button onClick={() => setShowAddTeamDialog(true)}>
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Add Team
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={exportToCSV}>
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export to Excel
+                </Button>
+                <Button onClick={() => setShowAddTeamDialog(true)}>
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Team
+                </Button>
+              </div>
             </div>
 
             {/* Stats */}
